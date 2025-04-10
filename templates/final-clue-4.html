@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Clue</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .game-card {
+      background-color: rgba(10, 10, 30, 0.8);
+      border: 2px solid var(--neon-blue);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 0 15px var(--neon-blue);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .versus-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 2rem 0;
+      position: relative;
+    }
+
+    .term-card {
+      background-color: rgba(10, 10, 30, 0.9);
+      border: 1px solid var(--neon-purple);
+      border-radius: 8px;
+      padding: 1.5rem;
+      width: 45%;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px var(--neon-purple);
+    }
+
+    .term-card:hover {
+      box-shadow: 0 0 20px var(--neon-pink);
+      transform: translateY(-5px);
+    }
+
+    .term-name {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--neon-yellow);
+      margin-bottom: 1rem;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .term-volume {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--neon-blue);
+      margin-top: 1rem;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      text-align: center;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .term-volume.show {
+      opacity: 1;
+    }
+
+    .vs-badge {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
+      color: white;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 1.5rem;
+      z-index: 2;
+      box-shadow: 0 0 15px var(--neon-pink);
+    }
+
+    .game-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .game-btn {
+      background-color: var(--neon-blue);
+      color: var(--dark-bg);
+      font-family: 'Share Tech Mono', monospace;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: bold;
+      min-width: 120px;
+    }
+
+    .game-btn:hover {
+      background-color: var(--neon-yellow);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-blue);
+    }
+
+    .higher-btn {
+      background-color: var(--neon-blue);
+    }
+
+    .lower-btn {
+      background-color: var(--neon-purple);
+    }
+
+    .streak-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .streak-dot {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--neon-blue);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .streak-dot.active {
+      background-color: var(--neon-blue);
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .instructions {
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-purple);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      max-width: 600px;
+    }
+
+    .message-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: var(--dark-bg);
+      border: 2px solid var(--neon-blue);
+      border-radius: 10px;
+      padding: 2rem;
+      z-index: 100;
+      text-align: center;
+      display: none;
+      max-width: 90%;
+      width: 500px;
+      box-shadow: 0 0 30px var(--neon-blue), 0 0 60px rgba(0, 243, 255, 0.4);
+    }
+
+    .message-container h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--neon-yellow);
+    }
+
+    .message-container p {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    .revealed-letter {
+      font-size: 8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink), var(--neon-purple));
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      margin: 2rem 0;
+      animation: pulseLetter 2s infinite alternate;
+    }
+
+    @keyframes pulseLetter {
+      from {
+        filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      }
+
+      to {
+        filter: drop-shadow(0 0 30px rgba(255, 0, 255, 0.8));
+      }
+    }
+
+    .close-btn {
+      background-color: var(--neon-purple);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+    }
+
+    .close-btn:hover {
+      background-color: var(--neon-pink);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-pink);
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(10, 10, 30, 0.8);
+      z-index: 99;
+      display: none;
+    }
+
+    .result-flash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 5rem;
+      font-weight: bold;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5;
+      transition: opacity 0.3s ease;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: var(--dark-bg);
+      padding: 2rem;
+    }
+
+    .result-flash.correct {
+      background-color: rgba(0, 255, 0, 0.2);
+      color: var(--neon-yellow);
+    }
+
+    .result-flash.wrong {
+      background-color: rgba(255, 0, 0, 0.2);
+      color: var(--neon-pink);
+    }
+
+    .result-flash.show {
+      opacity: 1;
+      animation: flashResult 1s forwards;
+    }
+
+    @keyframes flashResult {
+      0% {
+        opacity: 0;
+      }
+
+      20% {
+        opacity: 1;
+      }
+
+      80% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .versus-container {
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      .term-card {
+        width: 100%;
+        min-height: 150px;
+      }
+
+      .term-name {
+        font-size: 1.5rem;
+        text-align: center;
+      }
+
+      .term-volume {
+        font-size: 1.8rem;
+      }
+
+      .instructions {
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .game-card {
+        padding: 1.2rem;
+      }
+
+      .term-name {
+        font-size: 1.2rem;
+      }
+
+      .term-volume {
+        font-size: 1.6rem;
+      }
+
+      .game-btn {
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        min-width: 100px;
+      }
+
+      .message-container {
+        width: 95%;
+        padding: 1.5rem;
+      }
+
+      .revealed-letter {
+        font-size: 6rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hex-pattern"></div>
+  <div class="scanner"></div>
+
+  <!-- Particle elements -->
+  <div class="particle" style="top: 15%; left: 10%"></div>
+  <div class="particle" style="top: 25%; left: 20%"></div>
+  <div class="particle" style="top: 35%; left: 80%"></div>
+  <div class="particle" style="top: 55%; left: 15%"></div>
+  <div class="particle" style="top: 75%; left: 65%"></div>
+  <div class="particle" style="top: 85%; left: 45%"></div>
+  <div class="particle" style="top: 15%; left: 70%"></div>
+  <div class="particle" style="top: 45%; left: 90%"></div>
+
+  <div class="container">
+    <h1>Final Clue</h1>
+
+    <div class="instructions">
+      <p>Guess whether the search term on the right has a HIGHER or LOWER monthly Google search volume than the term on
+        the left.</p>
+      <p>Get 5 correct guesses in a row to unlock the next letter of the final solution.</p>
+    </div>
+
+    <div class="game-container">
+      <div class="game-card">
+        <div class="result-flash" id="result-flash"></div>
+
+        <div class="versus-container">
+          <div class="term-card" id="current-term">
+            <div class="term-name" id="current-term-name">Loading...</div>
+            <div class="term-volume" id="current-term-volume">0</div>
+          </div>
+
+          <div class="vs-badge">VS</div>
+
+          <div class="term-card" id="next-term">
+            <div class="term-name" id="next-term-name">Loading...</div>
+            <div class="term-volume" id="next-term-volume">?</div>
+          </div>
+        </div>
+
+        <div class="game-buttons">
+          <button class="game-btn higher-btn" id="higher-btn">Higher</button>
+          <button class="game-btn lower-btn" id="lower-btn">Lower</button>
+        </div>
+
+        <div class="streak-container">
+          <div class="streak-dot" id="streak-1"></div>
+          <div class="streak-dot" id="streak-2"></div>
+          <div class="streak-dot" id="streak-3"></div>
+          <div class="streak-dot" id="streak-4"></div>
+          <div class="streak-dot" id="streak-5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="message-container" id="win-message">
+    <h2>Congratulations!</h2>
+    <p>You've correctly guessed 5 search volumes in a row!</p>
+    <p>The letter you've unlocked is:</p>
+    <div class="revealed-letter">K</div>
+    <p>Remember this letter for the final solution.</p>
+    <button class="close-btn" id="close-modal">Close</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // DOM Elements
+      const currentTermName = document.getElementById('current-term-name');
+      const currentTermVolume = document.getElementById('current-term-volume');
+      const nextTermName = document.getElementById('next-term-name');
+      const nextTermVolume = document.getElementById('next-term-volume');
+      const higherBtn = document.getElementById('higher-btn');
+      const lowerBtn = document.getElementById('lower-btn');
+      const resultFlash = document.getElementById('result-flash');
+      const streakDots = [
+        document.getElementById('streak-1'),
+        document.getElementById('streak-2'),
+        document.getElementById('streak-3'),
+        document.getElementById('streak-4'),
+        document.getElementById('streak-5')
+      ];
+      const winMessage = document.getElementById('win-message');
+      const overlay = document.getElementById('overlay');
+      const closeModal = document.getElementById('close-modal');
+
+      // Game state
+      let currentStreak = 0;
+      let terms = [];
+      let currentTermIndex = 0;
+      let isGameActive = false;
+
+      // Search terms with volumes (monthly searches, approximate)
+      const searchTerms = [
+        { name: "Facebook", volume: 1830000000 },
+        { name: "YouTube", volume: 1680000000 },
+        { name: "Amazon", volume: 1220000000 },
+        { name: "Weather", volume: 988000000 },
+        { name: "Google", volume: 756000000 },
+        { name: "Netflix", volume: 698000000 },
+        { name: "Instagram", volume: 650000000 },
+        { name: "Gmail", volume: 578000000 },
+        { name: "Translate", volume: 522000000 },
+        { name: "Twitter", volume: 496000000 },
+        { name: "News", volume: 450000000 },
+        { name: "WhatsApp", volume: 388000000 },
+        { name: "Disney Plus", volume: 337000000 },
+        { name: "LinkedIn", volume: 290000000 },
+        { name: "Spotify", volume: 272000000 },
+        { name: "Walmart", volume: 246000000 },
+        { name: "NBA", volume: 228000000 },
+        { name: "Zoom", volume: 188000000 },
+        { name: "PayPal", volume: 162000000 },
+        { name: "TikTok", volume: 154000000 },
+        { name: "Reddit", volume: 145000000 },
+        { name: "Snapchat", volume: 124000000 },
+        { name: "Uber", volume: 110000000 },
+        { name: "Roblox", volume: 96400000 },
+        { name: "Twitch", volume: 82700000 },
+        { name: "ChatGPT", volume: 76500000 },
+        { name: "Minecraft", volume: 68500000 },
+        { name: "Bitcoin", volume: 61400000 },
+        { name: "Tesla", volume: 55000000 },
+        { name: "PlayStation", volume: 50200000 },
+        { name: "Xbox", volume: 45600000 },
+        { name: "Nike", volume: 41300000 },
+        { name: "Airbnb", volume: 37800000 },
+        { name: "Fortnite", volume: 33600000 },
+        { name: "Wordle", volume: 28400000 },
+        { name: "Starbucks", volume: 24300000 },
+        { name: "Adidas", volume: 20500000 },
+        { name: "Tinder", volume: 18700000 },
+        { name: "Apple Watch", volume: 15600000 },
+        { name: "Ethereum", volume: 12800000 },
+        { name: "Canon", volume: 10500000 },
+        { name: "Sony", volume: 8700000 },
+        { name: "Zara", volume: 6800000 },
+        { name: "GitHub", volume: 5600000 },
+        { name: "Oculus", volume: 4200000 },
+        { name: "Arduino", volume: 3100000 },
+        { name: "IKEA", volume: 2700000 },
+        { name: "LEGO", volume: 1900000 },
+        { name: "Raspberry Pi", volume: 1400000 },
+        { name: "Notion", volume: 1100000 }
+      ];
+
+      // Initialize the game
+      function initGame() {
+        // Shuffle and prepare terms
+        terms = [...searchTerms].sort(() => 0.5 - Math.random());
+        currentTermIndex = 0;
+        currentStreak = 0;
+        isGameActive = true;
+
+        // Reset streak dots
+        streakDots.forEach(dot => dot.classList.remove('active'));
+
+        // Load the first term
+        loadNextTerm();
+
+        // Enable buttons
+        higherBtn.disabled = false;
+        lowerBtn.disabled = false;
+      }
+
+      // Load the next term
+      function loadNextTerm() {
+        // Set current term
+        const currentTerm = terms[currentTermIndex];
+        currentTermName.textContent = currentTerm.name;
+        currentTermVolume.textContent = formatNumber(currentTerm.volume);
+        currentTermVolume.classList.add('show');
+
+        // Prepare next term (if available)
+        if (currentTermIndex < terms.length - 1) {
+          const nextTerm = terms[currentTermIndex + 1];
+          nextTermName.textContent = nextTerm.name;
+          nextTermVolume.textContent = '?';
+          nextTermVolume.classList.remove('show');
+        } else {
+          // If we're out of terms, shuffle and start over
+          terms = [...searchTerms].sort(() => 0.5 - Math.random());
+          const nextTerm = terms[0];
+          nextTermName.textContent = nextTerm.name;
+          nextTermVolume.textContent = '?';
+          nextTermVolume.classList.remove('show');
+        }
+      }
+
+      // Format large numbers with commas
+      function formatNumber(num) {
+        if (num >= 1000000) {
+          return (num / 1000000).toFixed(1) + "M";
+        } else if (num >= 1000) {
+          return (num / 1000).toFixed(1) + "K";
+        }
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      // Handle guess (higher or lower)
+      function handleGuess(isHigher) {
+        if (!isGameActive) return;
+
+        // Disable buttons during animation
+        higherBtn.disabled = true;
+        lowerBtn.disabled = true;
+
+        // Get current and next terms
+        const currentTerm = terms[currentTermIndex];
+        let nextTerm;
+
+        if (currentTermIndex < terms.length - 1) {
+          nextTerm = terms[currentTermIndex + 1];
+        } else {
+          nextTerm = terms[0];
+        }
+
+        // Show the next term's volume
+        nextTermVolume.textContent = formatNumber(nextTerm.volume);
+        nextTermVolume.classList.add('show');
+
+        // Check if guess is correct
+        const isCorrect = isHigher ?
+          (nextTerm.volume > currentTerm.volume) :
+          (nextTerm.volume < currentTerm.volume);
+
+        // Show result flash
+        resultFlash.textContent = isCorrect ? 'CORRECT!' : 'WRONG!';
+        resultFlash.classList.add(isCorrect ? 'correct' : 'wrong');
+        resultFlash.classList.add('show');
+
+        // Update streak
+        if (isCorrect) {
+          currentStreak++;
+          streakDots[currentStreak - 1].classList.add('active');
+
+          // Check if player has won
+          if (currentStreak >= 5) {
+            setTimeout(() => {
+              showWinMessage();
+              isGameActive = false;
+            }, 1500);
+          }
+        } else {
+          // Reset streak on wrong guess
+          currentStreak = 0;
+          streakDots.forEach(dot => dot.classList.remove('active'));
+        }
+
+        // Move to next term after delay
+        setTimeout(() => {
+          // Remove result flash
+          resultFlash.classList.remove('show', 'correct', 'wrong');
+
+          // Move to next term
+          currentTermIndex = (currentTermIndex + 1) % terms.length;
+          loadNextTerm();
+
+          // Re-enable buttons
+          if (isGameActive) {
+            higherBtn.disabled = false;
+            lowerBtn.disabled = false;
+          }
+        }, 2000);
+      }
+
+      // Show win message
+      function showWinMessage() {
+        winMessage.style.display = 'block';
+        overlay.style.display = 'block';
+      }
+
+      // Event listeners
+      higherBtn.addEventListener('click', () => handleGuess(true));
+      lowerBtn.addEventListener('click', () => handleGuess(false));
+
+      closeModal.addEventListener('click', function () {
+        winMessage.style.display = 'none';
+        overlay.style.display = 'none';
+        initGame(); // Start a new game after closing the modal
+      });
+
+      // Initialize the game on page load
+      initGame();
+    });
+  </script>
+</body>
+
+</html>

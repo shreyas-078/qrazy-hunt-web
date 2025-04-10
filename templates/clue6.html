@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clue 6</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .morse-container {
+      margin: 2rem auto;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    .morse-box {
+      background-color: rgba(10, 10, 30, 0.8);
+      border: 1px solid var(--neon-blue);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      font-family: monospace;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      color: var(--neon-yellow);
+      box-shadow: 0 0 15px var(--neon-blue);
+      overflow-wrap: break-word;
+      line-height: 2;
+    }
+
+    .morse-controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .morse-btn {
+      background-color: var(--neon-blue);
+      color: var(--dark-bg);
+      font-family: 'Share Tech Mono', monospace;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .morse-btn:hover {
+      background-color: var(--neon-yellow);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-blue);
+    }
+
+    .morse-hint {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-purple);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 2rem;
+      display: none;
+    }
+
+    .morse-hint.visible {
+      display: block;
+      animation: fadeIn 0.5s;
+    }
+
+    .translation-box {
+      background-color: rgba(10, 10, 30, 0.8);
+      border: 1px solid var(--neon-pink);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.2rem;
+      color: white;
+      min-height: 100px;
+      display: none;
+    }
+
+    .translation-box.visible {
+      display: block;
+      animation: fadeIn 0.5s;
+    }
+
+    .morse-reference {
+      display: none;
+      margin-top: 2rem;
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-purple);
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .morse-reference.visible {
+      display: block;
+      animation: fadeIn 0.5s;
+    }
+
+    .morse-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      color: white;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .morse-table th,
+    .morse-table td {
+      border: 1px solid var(--neon-blue);
+      padding: 0.5rem;
+      text-align: center;
+    }
+
+    .morse-table th {
+      background-color: rgba(0, 243, 255, 0.2);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--neon-yellow);
+      margin: 0 2px;
+    }
+
+    .dash {
+      display: inline-block;
+      width: 30px;
+      height: 8px;
+      background-color: var(--neon-yellow);
+      margin: 0 2px;
+    }
+
+    .letter-space {
+      display: inline-block;
+      width: 20px;
+    }
+
+    .word-space {
+      display: inline-block;
+      width: 50px;
+    }
+
+    .morse-sound-btn {
+      background-color: var(--neon-purple);
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hex-pattern"></div>
+  <div class="scanner"></div>
+
+  <!-- Particle elements -->
+  <div class="particle" style="top: 15%; left: 10%"></div>
+  <div class="particle" style="top: 25%; left: 20%"></div>
+  <div class="particle" style="top: 35%; left: 80%"></div>
+  <div class="particle" style="top: 55%; left: 15%"></div>
+  <div class="particle" style="top: 75%; left: 65%"></div>
+  <div class="particle" style="top: 85%; left: 45%"></div>
+  <div class="particle" style="top: 15%; left: 70%"></div>
+  <div class="particle" style="top: 45%; left: 90%"></div>
+
+  <div class="container">
+    <h1>Clue #6</h1>
+
+    <div class="morse-container">
+      <div class="morse-box" id="morse-display">
+        <!-- This will be filled with visual morse code by JavaScript -->
+      </div>
+
+      <div class="morse-controls">
+        <button class="morse-btn" id="showHint-btn">Show Hint</button>
+        <button class="morse-btn" id="showTable-btn">Morse Code Table</button>
+        <button class="morse-btn morse-sound-btn" id="playMorse-btn">Play Morse Code</button>
+      </div>
+
+      <div class="morse-hint" id="morse-hint">
+        <p>This is a message in Morse code. Decode it to find your next location.</p>
+        <p>In Morse code, dots (•) represent short signals, and dashes (−) represent long signals.</p>
+        <p>Letters are separated by spaces, and words are separated by longer spaces.</p>
+      </div>
+
+      <div class="morse-reference" id="morse-reference">
+        <h3>Morse Code Reference</h3>
+        <table class="morse-table">
+          <tr>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+            <th>G</th>
+            <th>H</th>
+            <th>I</th>
+          </tr>
+          <tr>
+            <td>• −</td>
+            <td>− • • •</td>
+            <td>− • − •</td>
+            <td>− • •</td>
+            <td>•</td>
+            <td>• • − •</td>
+            <td>− − •</td>
+            <td>• • • •</td>
+            <td>• •</td>
+          </tr>
+          <tr>
+            <th>J</th>
+            <th>K</th>
+            <th>L</th>
+            <th>M</th>
+            <th>N</th>
+            <th>O</th>
+            <th>P</th>
+            <th>Q</th>
+            <th>R</th>
+          </tr>
+          <tr>
+            <td>• − − −</td>
+            <td>− • −</td>
+            <td>• − • •</td>
+            <td>− −</td>
+            <td>− •</td>
+            <td>− − −</td>
+            <td>• − − •</td>
+            <td>− − • −</td>
+            <td>• − •</td>
+          </tr>
+          <tr>
+            <th>S</th>
+            <th>T</th>
+            <th>U</th>
+            <th>V</th>
+            <th>W</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>Z</th>
+            <th>Space</th>
+          </tr>
+          <tr>
+            <td>• • •</td>
+            <td>−</td>
+            <td>• • −</td>
+            <td>• • • −</td>
+            <td>• − −</td>
+            <td>− • • −</td>
+            <td>− • − −</td>
+            <td>− − • •</td>
+            <td>(longer gap)</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Morse code for the message
+      const morseMessage = ".-- .... . -. / .... ..- -. --. . .-. / -.-. .- .-.. .-.. ... --..-- / -.-- --- ..- .----. .-.. .-.. / ..-. .. -. -.. / -- . / -. . .- .-. --..-- / .-- .. - .... / ..-. --- --- -.. / .- -. -.. / -.-. .... .- - - . .-. --..-- / .. / -... .-. .. -. --. / --. --- --- -.. / -.-. .... . . .-. .-.-.-";
+
+      const morseDisplay = document.getElementById('morse-display');
+      const showHintBtn = document.getElementById('showHint-btn');
+      const showTableBtn = document.getElementById('showTable-btn');
+      const playMorseBtn = document.getElementById('playMorse-btn');
+      const morseHint = document.getElementById('morse-hint');
+      const translationBox = document.getElementById('translation-box');
+      const morseReference = document.getElementById('morse-reference');
+
+      // Setup visual representation of morse code
+      function setupVisualMorse() {
+        morseDisplay.innerHTML = '';
+        const parts = morseMessage.split(' ');
+
+        parts.forEach((part, index) => {
+          if (part === '/') {
+            // Word space
+            const wordSpace = document.createElement('span');
+            wordSpace.className = 'word-space';
+            morseDisplay.appendChild(wordSpace);
+          } else {
+            // Letter
+            for (let i = 0; i < part.length; i++) {
+              if (part[i] === '.') {
+                const dot = document.createElement('span');
+                dot.className = 'dot';
+                morseDisplay.appendChild(dot);
+              } else if (part[i] === '-') {
+                const dash = document.createElement('span');
+                dash.className = 'dash';
+                morseDisplay.appendChild(dash);
+              }
+            }
+
+            // Add letter space after each letter unless it's a word space
+            if (index < parts.length - 1 && parts[index + 1] !== '/') {
+              const letterSpace = document.createElement('span');
+              letterSpace.className = 'letter-space';
+              morseDisplay.appendChild(letterSpace);
+            }
+          }
+        });
+      }
+
+      // Button event listeners
+      showHintBtn.addEventListener('click', function () {
+        morseHint.classList.toggle('visible');
+      });
+
+      showTableBtn.addEventListener('click', function () {
+        morseReference.classList.toggle('visible');
+      });
+
+      // Audio for morse code playback
+      const dotDuration = 100; // milliseconds
+      const dashDuration = dotDuration * 3;
+      const elementGap = dotDuration;
+      const letterGap = dotDuration * 3;
+      const wordGap = dotDuration * 7;
+
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+      function playMorseSound(type) {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.connect(gainNode);
+
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start();
+
+        if (type === '.') {
+          oscillator.stop(audioContext.currentTime + dotDuration / 1000);
+        } else if (type === '-') {
+          oscillator.stop(audioContext.currentTime + dashDuration / 1000);
+        }
+      }
+
+      playMorseBtn.addEventListener('click', function () {
+        let currentTime = 0;
+
+        // Parse and play the morse code
+        const parts = morseMessage.split(' ');
+
+        parts.forEach((part, index) => {
+          if (part === '/') {
+            // Word space
+            currentTime += wordGap - letterGap; // Subtract letter gap since we already added it after the last letter
+          } else {
+            // Letter
+            for (let i = 0; i < part.length; i++) {
+              setTimeout(() => {
+                playMorseSound(part[i]);
+              }, currentTime);
+
+              if (part[i] === '.') {
+                currentTime += dotDuration;
+              } else if (part[i] === '-') {
+                currentTime += dashDuration;
+              }
+
+              // Add gap between elements within a letter
+              if (i < part.length - 1) {
+                currentTime += elementGap;
+              }
+            }
+
+            // Add gap after each letter
+            currentTime += letterGap;
+          }
+        });
+      });
+
+      // Initialize the visual display
+      setupVisualMorse();
+    });
+  </script>
+</body>
+
+</html>

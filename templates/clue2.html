@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clue 2</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .hangman-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .word-display {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .letter-box {
+      width: 40px;
+      height: 40px;
+      border-bottom: 3px solid var(--neon-blue);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      color: var(--neon-yellow);
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .keyboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      max-width: 600px;
+      margin-bottom: 2rem;
+    }
+
+    .key {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--neon-blue);
+      border-radius: 4px;
+      background-color: rgba(10, 10, 30, 0.7);
+      color: white;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    .key:hover {
+      background-color: var(--neon-blue);
+      color: var(--dark-bg);
+      transform: scale(1.05);
+    }
+
+    .key.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .key.correct {
+      background-color: rgba(0, 255, 0, 0.3);
+      border-color: var(--neon-yellow);
+    }
+
+    .key.incorrect {
+      background-color: rgba(255, 0, 0, 0.3);
+      border-color: var(--neon-pink);
+    }
+
+    .hangman-figure {
+      width: 200px;
+      height: 250px;
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .hangman-part {
+      position: absolute;
+      stroke: var(--neon-blue);
+      stroke-width: 3;
+      fill: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .hangman-part.visible {
+      opacity: 1;
+    }
+
+    .message-container {
+      background-color: rgba(10, 10, 30, 0.9);
+      border: 1px solid var(--neon-purple);
+      border-radius: 10px;
+      padding: 2rem;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      text-align: center;
+      display: none;
+      max-width: 90%;
+      width: 500px;
+      box-shadow: 0 0 30px var(--neon-purple);
+    }
+
+    .message-container img {
+      max-width: 200px;
+      margin: 1rem auto;
+      display: block;
+      border: 2px solid var(--neon-blue);
+      border-radius: 5px;
+    }
+
+    .tries-left {
+      color: var(--neon-pink);
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .glitch-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 99;
+      display: none;
+    }
+
+    .restart-btn {
+      background-color: var(--neon-blue);
+      color: var(--dark-bg);
+      font-family: 'Share Tech Mono', monospace;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .restart-btn:hover {
+      background-color: var(--neon-yellow);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-blue);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hex-pattern"></div>
+  <div class="scanner"></div>
+
+  <!-- Particle elements -->
+  <div class="particle" style="top: 15%; left: 10%"></div>
+  <div class="particle" style="top: 25%; left: 20%"></div>
+  <div class="particle" style="top: 35%; left: 80%"></div>
+  <div class="particle" style="top: 55%; left: 15%"></div>
+  <div class="particle" style="top: 75%; left: 65%"></div>
+  <div class="particle" style="top: 85%; left: 45%"></div>
+  <div class="particle" style="top: 15%; left: 70%"></div>
+  <div class="particle" style="top: 45%; left: 90%"></div>
+
+  <div class="container">
+    <h1>Clue #2</h1>
+    <div class="hangman-container">
+      <div class="tries-left">Tries Left: <span id="tries-count">6</span></div>
+
+      <svg class="hangman-figure" viewBox="0 0 200 250">
+        <!-- Gallows -->
+        <line x1="20" y1="230" x2="180" y2="230" class="hangman-part visible"></line>
+        <line x1="40" y1="230" x2="40" y2="20" class="hangman-part visible"></line>
+        <line x1="40" y1="20" x2="120" y2="20" class="hangman-part visible"></line>
+        <line x1="120" y1="20" x2="120" y2="50" class="hangman-part visible"></line>
+
+        <!-- Head -->
+        <circle cx="120" cy="70" r="20" class="hangman-part" id="part-1"></circle>
+
+        <!-- Body -->
+        <line x1="120" y1="90" x2="120" y2="150" class="hangman-part" id="part-2"></line>
+
+        <!-- Arms -->
+        <line x1="120" y1="110" x2="90" y2="100" class="hangman-part" id="part-3"></line>
+        <line x1="120" y1="110" x2="150" y2="100" class="hangman-part" id="part-4"></line>
+
+        <!-- Legs -->
+        <line x1="120" y1="150" x2="100" y2="190" class="hangman-part" id="part-5"></line>
+        <line x1="120" y1="150" x2="140" y2="190" class="hangman-part" id="part-6"></line>
+      </svg>
+
+      <div class="word-display" id="word-display"></div>
+
+      <div class="keyboard" id="keyboard"></div>
+    </div>
+  </div>
+
+  <!-- Message that appears when game is won -->
+  <div class="glitch-overlay" id="overlay"></div>
+  <div class="message-container" id="win-message">
+    <h2>Congratulations!</h2>
+    <p>You've deciphered the message: "The hour bends at three-oh-three."</p>
+    <img src="{{ url_for('static', filename='assets/image.png') }}" alt="Thakur">
+    <p>Thakur is lurking in the first floor. Tell him the secret message to advance.</p>
+  </div>
+
+  <!-- Message that appears when game is lost -->
+  <div class="message-container" id="lose-message">
+    <h2>Game Over</h2>
+    <p>You failed to decipher the message.</p>
+    <button id="restart-btn" class="restart-btn">Restart Game</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const phrase = "THE HOUR BENDS AT THREE OH THREE";
+      const wordDisplay = document.getElementById('word-display');
+      const keyboard = document.getElementById('keyboard');
+      const triesCount = document.getElementById('tries-count');
+      const winMessage = document.getElementById('win-message');
+      const loseMessage = document.getElementById('lose-message');
+      const overlay = document.getElementById('overlay');
+      const restartBtn = document.getElementById('restart-btn');
+
+      let remainingTries = 6;
+      let correctGuesses = 0;
+      const totalLetters = phrase.replace(/\s/g, '').length;
+
+      // Initialize game
+      initGame();
+
+      function initGame() {
+        // Clear previous game state
+        wordDisplay.innerHTML = '';
+        keyboard.innerHTML = '';
+        remainingTries = 6;
+        correctGuesses = 0;
+        triesCount.textContent = remainingTries;
+
+        // Hide all hangman parts except the gallows
+        document.querySelectorAll('.hangman-part:not(.visible)').forEach(part => {
+          if (!part.classList.contains('visible')) {
+            part.classList.remove('visible');
+          }
+        });
+
+        // Ensure only the gallows are visible
+        document.querySelectorAll('#part-1, #part-2, #part-3, #part-4, #part-5, #part-6').forEach(part => {
+          part.classList.remove('visible');
+        });
+
+        // Create letter boxes for the phrase
+        for (let i = 0; i < phrase.length; i++) {
+          const letterBox = document.createElement('div');
+          letterBox.classList.add('letter-box');
+
+          if (phrase[i] === ' ') {
+            letterBox.textContent = ' ';
+            letterBox.style.borderBottom = 'none';
+          } else {
+            letterBox.dataset.letter = phrase[i];
+          }
+
+          wordDisplay.appendChild(letterBox);
+        }
+
+        // Create keyboard
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for (let i = 0; i < alphabet.length; i++) {
+          const key = document.createElement('button');
+          key.classList.add('key');
+          key.textContent = alphabet[i];
+
+          key.addEventListener('click', function () {
+            if (!this.classList.contains('disabled')) {
+              checkLetter(alphabet[i], this);
+            }
+          });
+
+          keyboard.appendChild(key);
+        }
+      }
+
+      // Function to check if the guessed letter is in the phrase
+      function checkLetter(letter, keyElement) {
+        keyElement.classList.add('disabled');
+
+        let found = false;
+        const letterBoxes = document.querySelectorAll('.letter-box');
+
+        letterBoxes.forEach(box => {
+          if (box.dataset.letter === letter) {
+            box.textContent = letter;
+            found = true;
+            correctGuesses++;
+          }
+        });
+
+        if (found) {
+          keyElement.classList.add('correct');
+
+          // Check if all letters have been guessed
+          if (correctGuesses === totalLetters) {
+            setTimeout(() => {
+              showWinMessage();
+            }, 500);
+          }
+        } else {
+          keyElement.classList.add('incorrect');
+          remainingTries--;
+          triesCount.textContent = remainingTries;
+
+          // Show next hangman part - fixed formula to start with part-1
+          document.getElementById(`part-${6 - remainingTries}`).classList.add('visible');
+
+          // Check if game is lost
+          if (remainingTries <= 0) {
+            // Ensure remainingTries doesn't go negative
+            remainingTries = 0;
+            triesCount.textContent = remainingTries;
+
+            setTimeout(() => {
+              showLoseMessage();
+            }, 500);
+          }
+        }
+      }
+
+      // Function to reveal the word when game is lost
+      function revealWord() {
+        const letterBoxes = document.querySelectorAll('.letter-box');
+        letterBoxes.forEach(box => {
+          if (box.dataset.letter && !box.textContent) {
+            box.textContent = box.dataset.letter;
+            box.style.color = 'var(--neon-pink)';
+          }
+        });
+
+        disableAllKeys();
+      }
+
+      // Function to disable all keyboard keys
+      function disableAllKeys() {
+        const keys = document.querySelectorAll('.key');
+        keys.forEach(key => {
+          key.classList.add('disabled');
+        });
+      }
+
+      // Function to show win message
+      function showWinMessage() {
+        disableAllKeys();
+        winMessage.style.display = 'block';
+        overlay.style.display = 'block';
+      }
+
+      // Function to show lose message
+      function showLoseMessage() {
+        disableAllKeys();
+        loseMessage.style.display = 'block';
+        overlay.style.display = 'block';
+      }
+
+      // Event listener for restart button
+      restartBtn.addEventListener('click', function () {
+        loseMessage.style.display = 'none';
+        overlay.style.display = 'none';
+        initGame();
+      });
+
+      // Allow keyboard input
+      document.addEventListener('keydown', function (event) {
+        const key = event.key.toUpperCase();
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        if (alphabet.includes(key)) {
+          const keyElements = document.querySelectorAll('.key');
+          const keyElement = keyElements[alphabet.indexOf(key)];
+
+          if (keyElement && !keyElement.classList.contains('disabled')) {
+            keyElement.click();
+          }
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

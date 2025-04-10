@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Clue</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .crossword-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .crossword-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 40px);
+      grid-template-rows: repeat(12, 40px);
+      gap: 2px;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .cell {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-blue);
+      transition: all 0.3s ease;
+    }
+
+    .cell.black {
+      background-color: rgba(10, 10, 30, 0.9);
+      border: 1px solid var(--neon-purple);
+    }
+
+    .cell-input {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--neon-yellow);
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      cursor: pointer;
+      outline: none;
+      caret-color: var(--neon-pink);
+    }
+
+    .cell-number {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      font-size: 0.7rem;
+      color: var(--neon-purple);
+    }
+
+    .cell.selected {
+      background-color: rgba(188, 19, 254, 0.2);
+      box-shadow: 0 0 10px var(--neon-purple);
+      z-index: 2;
+    }
+
+    .cell.highlighted {
+      background-color: rgba(0, 243, 255, 0.1);
+      z-index: 1;
+    }
+
+    .cell.correct {
+      border-color: var(--neon-yellow);
+    }
+
+    .clues-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .clues-column {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .clue-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .clue-header {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      color: var(--neon-blue);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .clue-header::before {
+      content: '';
+      display: block;
+      width: 1rem;
+      height: 1rem;
+      background-color: var(--neon-blue);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    }
+
+    .clue-list {
+      list-style-type: none;
+    }
+
+    .clue-item {
+      padding: 0.5rem;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .clue-item:hover {
+      background-color: rgba(0, 243, 255, 0.1);
+    }
+
+    .clue-item.selected {
+      background-color: rgba(188, 19, 254, 0.2);
+    }
+
+    .clue-number {
+      font-weight: bold;
+      color: var(--neon-yellow);
+      margin-right: 0.5rem;
+    }
+
+    .message-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: var(--dark-bg);
+      border: 2px solid var(--neon-blue);
+      border-radius: 10px;
+      padding: 2rem;
+      z-index: 100;
+      text-align: center;
+      display: none;
+      max-width: 90%;
+      width: 500px;
+      box-shadow: 0 0 30px var(--neon-blue), 0 0 60px rgba(0, 243, 255, 0.4);
+    }
+
+    .message-container h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--neon-yellow);
+    }
+
+    .message-container p {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    .revealed-number {
+      font-size: 8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink), var(--neon-purple));
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      margin: 2rem 0;
+      animation: pulseLetter 2s infinite alternate;
+    }
+
+    @keyframes pulseLetter {
+      from {
+        filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      }
+
+      to {
+        filter: drop-shadow(0 0 30px rgba(255, 0, 255, 0.8));
+      }
+    }
+
+    .close-btn {
+      background-color: var(--neon-purple);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+    }
+
+    .close-btn:hover {
+      background-color: var(--neon-pink);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-pink);
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(10, 10, 30, 0.8);
+      z-index: 99;
+      display: none;
+    }
+
+    .instructions {
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-purple);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      max-width: 800px;
+    }
+
+    @media (max-width: 768px) {
+      .crossword-grid {
+        grid-template-columns: repeat(12, 30px);
+        grid-template-rows: repeat(12, 30px);
+      }
+
+      .cell-input {
+        font-size: 1.2rem;
+      }
+
+      .clues-container {
+        flex-direction: column;
+      }
+
+      .clues-column {
+        min-width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .crossword-grid {
+        grid-template-columns: repeat(12, 25px);
+        grid-template-rows: repeat(12, 25px);
+      }
+
+      .cell-input {
+        font-size: 1rem;
+      }
+
+      .cell-number {
+        font-size: 0.6rem;
+      }
+
+      .message-container {
+        width: 95%;
+        padding: 1.5rem;
+      }
+
+      .revealed-number {
+        font-size: 6rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hex-pattern"></div>
+  <div class="scanner"></div>
+
+  <!-- Particle elements -->
+  <div class="particle" style="top: 15%; left: 10%"></div>
+  <div class="particle" style="top: 25%; left: 20%"></div>
+  <div class="particle" style="top: 35%; left: 80%"></div>
+  <div class="particle" style="top: 55%; left: 15%"></div>
+  <div class="particle" style="top: 75%; left: 65%"></div>
+  <div class="particle" style="top: 85%; left: 45%"></div>
+  <div class="particle" style="top: 15%; left: 70%"></div>
+  <div class="particle" style="top: 45%; left: 90%"></div>
+
+  <div class="container">
+    <h1>Final Clue</h1>
+
+    <div class="instructions">
+      <p>Solve the crossword puzzle to reveal the final number. Click on a cell to select it, then type to enter a
+        letter.
+        Tab or click to navigate between cells.</p>
+      <p>The highlighted pattern in the completed puzzle will reveal the answer.</p>
+    </div>
+
+    <div class="crossword-container">
+      <div class="crossword-grid" id="crossword-grid"></div>
+
+      <div class="clues-container">
+        <div class="clues-column">
+          <div class="clue-section">
+            <div class="clue-header">Across</div>
+            <ul class="clue-list" id="across-clues"></ul>
+          </div>
+        </div>
+        <div class="clues-column">
+          <div class="clue-section">
+            <div class="clue-header">Down</div>
+            <ul class="clue-list" id="down-clues"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="message-container" id="win-message">
+    <h2>Congratulations!</h2>
+    <p>You've solved the crossword puzzle!</p>
+    <p>The number you've unlocked is:</p>
+    <div class="revealed-number">2</div>
+    <p>Remember this number for the final solution.</p>
+    <button class="close-btn" id="close-modal">Close</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Crossword configuration - this defines the grid and answers
+      const crosswordData = {
+        grid: [
+          "############",
+          "#   ########",
+          "#   #  #   #",
+          "#   #  #   #",
+          "#      #   #",
+          "###### #   #",
+          "###### #   #",
+          "#      #   #",
+          "#   #  #   #",
+          "#   #  #   #",
+          "#   ########",
+          "############"
+        ],
+        // Special cells that will form the "2" shape when highlighted
+        specialCells: [
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 },
+          { row: 2, col: 3 }, { row: 3, col: 3 },
+          { row: 4, col: 3 }, { row: 4, col: 4 }, { row: 4, col: 5 },
+          { row: 5, col: 5 }, { row: 6, col: 5 },
+          { row: 7, col: 4 }, { row: 7, col: 3 }, { row: 7, col: 2 }, { row: 7, col: 1 },
+          { row: 8, col: 1 }, { row: 9, col: 1 },
+          { row: 10, col: 1 }, { row: 10, col: 2 }, { row: 10, col: 3 }
+        ],
+        // Clues and answers
+        across: {
+          1: { clue: "Digital transaction ledger, often decentralized", answer: "BLOCKCHAIN" },
+          4: { clue: "Virtual world or environment", answer: "CYBERSPACE" },
+          7: { clue: "Shortened form of binary digit", answer: "BIT" },
+          8: { clue: "Artificial brain, in short", answer: "AI" },
+          9: { clue: "A bug that allows unauthorized access", answer: "EXPLOIT" },
+          11: { clue: "Small piece of computer memory", answer: "BYTE" },
+          13: { clue: "Programming language named after a snake", answer: "PYTHON" },
+          16: { clue: "Digital money", answer: "CRYPTO" },
+          18: { clue: "System of connected computers", answer: "NETWORK" }
+        },
+        down: {
+          2: { clue: "Advanced AI that mimics human thought", answer: "NEURAL" },
+          3: { clue: "Protective wall for computer systems", answer: "FIREWALL" },
+          5: { clue: "Malicious software", answer: "MALWARE" },
+          6: { clue: "Technology that projects digital elements into real world", answer: "AR" },
+          10: { clue: "Identity verification process", answer: "AUTH" },
+          12: { clue: "Digital footprint left online", answer: "TRACE" },
+          14: { clue: "Document that verifies identity online", answer: "TOKEN" },
+          15: { clue: "Global computer network", answer: "INTERNET" },
+          17: { clue: "Electronic messaging system", answer: "EMAIL" }
+        }
+      };
+
+      // DOM elements
+      const crosswordGrid = document.getElementById('crossword-grid');
+      const acrossClues = document.getElementById('across-clues');
+      const downClues = document.getElementById('down-clues');
+      const winMessage = document.getElementById('win-message');
+      const overlay = document.getElementById('overlay');
+      const closeModal = document.getElementById('close-modal');
+
+      // Game state
+      let currentCell = null;
+      let currentDirection = 'across';
+      let cellsArray = [];
+      let selectedClueNumber = null;
+
+      // Initialize the crossword
+      initCrossword();
+
+      function initCrossword() {
+        createCrosswordGrid();
+        createClues();
+        addEventListeners();
+      }
+
+      // Create the crossword grid
+      function createCrosswordGrid() {
+        const grid = crosswordData.grid;
+        for (let row = 0; row < grid.length; row++) {
+          for (let col = 0; col < grid[row].length; col++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+
+            if (grid[row][col] === '#') {
+              cell.classList.add('black');
+            } else {
+              const input = document.createElement('input');
+              input.type = 'text';
+              input.classList.add('cell-input');
+              input.maxLength = 1;
+              input.dataset.row = row;
+              input.dataset.col = col;
+              cell.appendChild(input);
+
+              // Check if this cell is part of the "2" shape
+              const isSpecialCell = crosswordData.specialCells.some(
+                specialCell => specialCell.row === row && specialCell.col === col
+              );
+
+              if (isSpecialCell) {
+                cell.dataset.special = 'true';
+              }
+            }
+
+            crosswordGrid.appendChild(cell);
+            cellsArray.push({ row, col, element: cell });
+          }
+        }
+
+        // Add cell numbers
+        addCellNumbers();
+      }
+
+      // Add cell numbers to the grid
+      function addCellNumbers() {
+        let cellNumber = 1;
+
+        for (let row = 0; row < crosswordData.grid.length; row++) {
+          for (let col = 0; col < crosswordData.grid[row].length; col++) {
+            if (crosswordData.grid[row][col] !== '#') {
+              const isStartOfAcross = col === 0 || crosswordData.grid[row][col - 1] === '#';
+              const isStartOfDown = row === 0 || crosswordData.grid[row - 1][col] === '#';
+
+              if (isStartOfAcross || isStartOfDown) {
+                const cell = getCellAt(row, col);
+                if (cell) {
+                  const numberSpan = document.createElement('span');
+                  numberSpan.classList.add('cell-number');
+                  numberSpan.textContent = cellNumber;
+                  cell.appendChild(numberSpan);
+                  cell.dataset.number = cellNumber;
+                  cellNumber++;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Create clues lists
+      function createClues() {
+        // Across clues
+        Object.keys(crosswordData.across).forEach(number => {
+          const { clue } = crosswordData.across[number];
+          const clueItem = document.createElement('li');
+          clueItem.classList.add('clue-item');
+          clueItem.dataset.number = number;
+          clueItem.dataset.direction = 'across';
+          clueItem.innerHTML = `<span class="clue-number">${number}.</span> ${clue}`;
+          acrossClues.appendChild(clueItem);
+        });
+
+        // Down clues
+        Object.keys(crosswordData.down).forEach(number => {
+          const { clue } = crosswordData.down[number];
+          const clueItem = document.createElement('li');
+          clueItem.classList.add('clue-item');
+          clueItem.dataset.number = number;
+          clueItem.dataset.direction = 'down';
+          clueItem.innerHTML = `<span class="clue-number">${number}.</span> ${clue}`;
+          downClues.appendChild(clueItem);
+        });
+      }
+
+      // Add event listeners
+      function addEventListeners() {
+        // Add input event listeners
+        document.querySelectorAll('.cell-input').forEach(input => {
+          input.addEventListener('focus', handleCellFocus);
+          input.addEventListener('input', handleCellInput);
+          input.addEventListener('keydown', handleKeyDown);
+          input.addEventListener('click', handleCellClick);
+        });
+
+        // Add clue item event listeners
+        document.querySelectorAll('.clue-item').forEach(clueItem => {
+          clueItem.addEventListener('click', handleClueClick);
+        });
+
+        // Close modal button
+        closeModal.addEventListener('click', function () {
+          winMessage.style.display = 'none';
+          overlay.style.display = 'none';
+        });
+      }
+
+      // Handle cell focus
+      function handleCellFocus(event) {
+        const input = event.target;
+        const row = parseInt(input.dataset.row);
+        const col = parseInt(input.dataset.col);
+
+        selectCell(row, col);
+      }
+
+      // Handle cell click to toggle direction
+      function handleCellClick(event) {
+        if (currentCell && currentCell === event.target) {
+          toggleDirection();
+        }
+      }
+
+      // Toggle direction between across and down
+      function toggleDirection() {
+        currentDirection = currentDirection === 'across' ? 'down' : 'across';
+        const row = parseInt(currentCell.dataset.row);
+        const col = parseInt(currentCell.dataset.col);
+
+        clearHighlights();
+        highlightWord(row, col, currentDirection);
+
+        // Also highlight the corresponding clue
+        highlightClue(getCellNumber(row, col), currentDirection);
+      }
+
+      // Handle cell input
+      function handleCellInput(event) {
+        const input = event.target;
+        input.value = input.value.toUpperCase();
+
+        // Move to next cell after input
+        if (input.value.length === 1) {
+          moveToNextCell();
+        }
+
+        // Check if crossword is complete
+        checkCompletion();
+      }
+
+      // Handle key navigation
+      function handleKeyDown(event) {
+        const input = event.target;
+        const row = parseInt(input.dataset.row);
+        const col = parseInt(input.dataset.col);
+
+        switch (event.key) {
+          case 'ArrowRight':
+            selectCell(row, col + 1);
+            event.preventDefault();
+            break;
+          case 'ArrowLeft':
+            selectCell(row, col - 1);
+            event.preventDefault();
+            break;
+          case 'ArrowUp':
+            selectCell(row - 1, col);
+            event.preventDefault();
+            break;
+          case 'ArrowDown':
+            selectCell(row + 1, col);
+            event.preventDefault();
+            break;
+          case 'Tab':
+            event.preventDefault();
+            moveToNextCell();
+            break;
+          case 'Backspace':
+            if (input.value === '') {
+              // Move to previous cell if current cell is empty
+              moveToPrevCell();
+              event.preventDefault();
+            }
+            break;
+          case 'Delete':
+            input.value = '';
+            break;
+          case ' ':
+            // Space toggles direction
+            toggleDirection();
+            event.preventDefault();
+            break;
+        }
+      }
+
+      // Handle clue click
+      function handleClueClick(event) {
+        const clueItem = event.currentTarget;
+        const number = clueItem.dataset.number;
+        const direction = clueItem.dataset.direction;
+
+        // Find the first cell with this clue number
+        const cellWithNumber = cellsArray.find(cell =>
+          cell.element.dataset.number === number
+        );
+
+        if (cellWithNumber) {
+          const input = cellWithNumber.element.querySelector('.cell-input');
+          if (input) {
+            currentDirection = direction;
+            input.focus();
+          }
+        }
+      }
+
+      // Select a cell
+      function selectCell(row, col) {
+        // Check if the cell is valid and not black
+        const cell = getCellElement(row, col);
+        if (!cell || cell.classList.contains('black')) return;
+
+        const input = cell.querySelector('.cell-input');
+        if (input) {
+          currentCell = input;
+          input.focus();
+
+          // Clear all highlights
+          clearHighlights();
+
+          // Highlight the current word
+          highlightWord(row, col, currentDirection);
+
+          // Highlight the corresponding clue
+          highlightClue(getCellNumber(row, col), currentDirection);
+        }
+      }
+
+      // Highlight a word based on direction
+      function highlightWord(row, col, direction) {
+        // Clear selected class from all cells
+        document.querySelectorAll('.cell').forEach(cell => {
+          cell.classList.remove('selected');
+        });
+
+        // Add selected class to current cell
+        getCellElement(row, col).classList.add('selected');
+
+        // Highlight cells in the word
+        if (direction === 'across') {
+          // Find start of the word
+          let startCol = col;
+          while (startCol > 0 && getCellType(row, startCol - 1) !== 'black') {
+            startCol--;
+          }
+
+          // Highlight all cells in the word
+          let currentCol = startCol;
+          while (currentCol < crosswordData.grid[row].length && getCellType(row, currentCol) !== 'black') {
+            const cell = getCellElement(row, currentCol);
+            cell.classList.add('highlighted');
+            currentCol++;
+          }
+        } else {
+          // Find start of the word
+          let startRow = row;
+          while (startRow > 0 && getCellType(startRow - 1, col) !== 'black') {
+            startRow--;
+          }
+
+          // Highlight all cells in the word
+          let currentRow = startRow;
+          while (currentRow < crosswordData.grid.length && getCellType(currentRow, col) !== 'black') {
+            const cell = getCellElement(currentRow, col);
+            cell.classList.add('highlighted');
+            currentRow++;
+          }
+        }
+      }
+
+      // Highlight a clue in the list
+      function highlightClue(number, direction) {
+        // Remove selected class from all clue items
+        document.querySelectorAll('.clue-item').forEach(item => {
+          item.classList.remove('selected');
+        });
+
+        // Add selected class to the matching clue
+        const clueSelector = `.clue-item[data-number="${number}"][data-direction="${direction}"]`;
+        const clueItem = document.querySelector(clueSelector);
+
+        if (clueItem) {
+          clueItem.classList.add('selected');
+          // Scroll to make sure the clue is visible
+          clueItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+
+      // Clear all highlights
+      function clearHighlights() {
+        document.querySelectorAll('.cell').forEach(cell => {
+          cell.classList.remove('highlighted', 'selected');
+        });
+
+        document.querySelectorAll('.clue-item').forEach(item => {
+          item.classList.remove('selected');
+        });
+      }
+
+      // Move to the next cell in the current direction
+      function moveToNextCell() {
+        if (!currentCell) return;
+
+        const row = parseInt(currentCell.dataset.row);
+        const col = parseInt(currentCell.dataset.col);
+
+        if (currentDirection === 'across') {
+          // Try to move right
+          if (col + 1 < crosswordData.grid[row].length && getCellType(row, col + 1) !== 'black') {
+            selectCell(row, col + 1);
+          }
+          // If at the end of a word, move to the next word
+          else {
+            moveToNextWord();
+          }
+        } else {
+          // Try to move down
+          if (row + 1 < crosswordData.grid.length && getCellType(row + 1, col) !== 'black') {
+            selectCell(row + 1, col);
+          }
+          // If at the end of a word, move to the next word
+          else {
+            moveToNextWord();
+          }
+        }
+      }
+
+      // Move to the previous cell in the current direction
+      function moveToPrevCell() {
+        if (!currentCell) return;
+
+        const row = parseInt(currentCell.dataset.row);
+        const col = parseInt(currentCell.dataset.col);
+
+        if (currentDirection === 'across') {
+          // Try to move left
+          if (col > 0 && getCellType(row, col - 1) !== 'black') {
+            selectCell(row, col - 1);
+          }
+        } else {
+          // Try to move up
+          if (row > 0 && getCellType(row - 1, col) !== 'black') {
+            selectCell(row - 1, col);
+          }
+        }
+      }
+
+      // Move to the next word
+      function moveToNextWord() {
+        // This is simplified; in a real crossword, you might want more sophisticated navigation
+        const allInputs = Array.from(document.querySelectorAll('.cell-input'));
+        const currentIndex = allInputs.indexOf(currentCell);
+
+        if (currentIndex !== -1 && currentIndex < allInputs.length - 1) {
+          const nextInput = allInputs[currentIndex + 1];
+          const row = parseInt(nextInput.dataset.row);
+          const col = parseInt(nextInput.dataset.col);
+          selectCell(row, col);
+        }
+      }
+
+      // Check if the crossword is completed correctly
+      function checkCompletion() {
+        let isComplete = true;
+
+        // Check if all cells are filled
+        document.querySelectorAll('.cell-input').forEach(input => {
+          if (input.value === '') {
+            isComplete = false;
+          }
+        });
+
+        if (!isComplete) return;
+
+        // Check across answers
+        for (const [number, clueData] of Object.entries(crosswordData.across)) {
+          const answer = clueData.answer;
+          const startCell = findCellWithNumber(number);
+
+          if (startCell) {
+            const row = startCell.row;
+            let col = startCell.col;
+            let userAnswer = '';
+
+            for (let i = 0; i < answer.length; i++) {
+              const input = getCellInput(row, col + i);
+              if (input) {
+                userAnswer += input.value;
+              }
+            }
+
+            if (userAnswer !== answer) {
+              isComplete = false;
+              break;
+            }
+          }
+        }
+
+        if (!isComplete) return;
+
+        // Check down answers
+        for (const [number, clueData] of Object.entries(crosswordData.down)) {
+          const answer = clueData.answer;
+          const startCell = findCellWithNumber(number);
+
+          if (startCell) {
+            let row = startCell.row;
+            const col = startCell.col;
+            let userAnswer = '';
+
+            for (let i = 0; i < answer.length; i++) {
+              const input = getCellInput(row + i, col);
+              if (input) {
+                userAnswer += input.value;
+              }
+            }
+
+            if (userAnswer !== answer) {
+              isComplete = false;
+              break;
+            }
+          }
+        }
+
+        if (isComplete) {
+          // Mark all cells as correct
+          document.querySelectorAll('.cell:not(.black)').forEach(cell => {
+            cell.classList.add('correct');
+          });
+
+          // Show win message
+          setTimeout(() => {
+            highlightSpecialCells();
+            setTimeout(() => {
+              showWinMessage();
+            }, 1000);
+          }, 500);
+        }
+      }
+
+      // Highlight the cells that form the number "2"
+      function highlightSpecialCells() {
+        // Clear all highlights first
+        clearHighlights();
+
+        // Highlight cells that form the "2"
+        crosswordData.specialCells.forEach(({ row, col }) => {
+          const cell = getCellElement(row, col);
+          if (cell) {
+            cell.classList.add('selected');
+          }
+        });
+      }
+
+      // Show win message
+      function showWinMessage() {
+        winMessage.style.display = 'block';
+        overlay.style.display = 'block';
+      }
+
+      // Helper functions
+      function getCellElement(row, col) {
+        const cellIndex = row * crosswordData.grid[0].length + col;
+        return document.querySelectorAll('.cell')[cellIndex];
+      }
+
+      function getCellInput(row, col) {
+        const cell = getCellElement(row, col);
+        return cell ? cell.querySelector('.cell-input') : null;
+      }
+
+      function getCellType(row, col) {
+        if (row < 0 || row >= crosswordData.grid.length || col < 0 || col >= crosswordData.grid[row].length) {
+          return 'outside';
+        }
+
+        return crosswordData.grid[row][col] === '#' ? 'black' : 'white';
+      }
+
+      function getCellAt(row, col) {
+        return cellsArray.find(cell => cell.row === row && cell.col === col)?.element;
+      }
+
+      function getCellNumber(row, col) {
+        const cell = getCellElement(row, col);
+        return cell ? cell.dataset.number : null;
+      }
+
+      function findCellWithNumber(number) {
+        const cell = cellsArray.find(cell => cell.element.dataset.number === number);
+        return cell ? { row: cell.row, col: cell.col } : null;
+      }
+    });
+  </script>
+</body>
+
+</html>

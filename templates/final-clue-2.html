@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Clue</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .quiz-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .question {
+      background-color: rgba(10, 10, 30, 0.8);
+      border: 1px solid var(--neon-blue);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      box-shadow: 0 0 15px var(--neon-blue);
+    }
+
+    .question p {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: var(--neon-yellow);
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .option input[type="radio"] {
+      appearance: none;
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 2px solid var(--neon-blue);
+      border-radius: 50%;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .option input[type="radio"]:checked {
+      border-color: var(--neon-yellow);
+    }
+
+    .option input[type="radio"]:checked::before {
+      content: '';
+      position: absolute;
+      width: 0.8rem;
+      height: 0.8rem;
+      background-color: var(--neon-yellow);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px var(--neon-yellow);
+    }
+
+    .option label {
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .option:hover label {
+      color: var(--neon-pink);
+    }
+
+    .submit-btn {
+      background-color: var(--neon-blue);
+      color: var(--dark-bg);
+      font-family: 'Share Tech Mono', monospace;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: bold;
+      margin-top: 1rem;
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .submit-btn:hover {
+      background-color: var(--neon-yellow);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-yellow);
+    }
+
+    .reset-btn {
+      background-color: var(--neon-purple);
+      color: white;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .reset-btn:hover {
+      background-color: var(--neon-pink);
+      box-shadow: 0 0 15px var(--neon-pink);
+    }
+
+    #result {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .revealed-letter {
+      font-size: 8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      margin: 2rem 0;
+      animation: pulseLetter 2s infinite alternate;
+      display: none;
+    }
+
+    @keyframes pulseLetter {
+      from {
+        filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      }
+
+      to {
+        filter: drop-shadow(0 0 30px rgba(255, 0, 255, 0.8));
+      }
+    }
+
+    .progress-container {
+      width: 100%;
+      max-width: 600px;
+      background-color: rgba(10, 10, 30, 0.5);
+      border: 1px solid var(--neon-blue);
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+      height: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      transition: width 0.3s ease;
+      position: relative;
+    }
+
+    @media (max-width: 768px) {
+      .question {
+        padding: 1.2rem;
+      }
+
+      .revealed-letter {
+        font-size: 6rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .question p {
+        font-size: 1rem;
+      }
+
+      .option label {
+        font-size: 0.9rem;
+      }
+
+      .revealed-letter {
+        font-size: 5rem;
+      }
+
+      .submit-btn,
+      .reset-btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hex-pattern"></div>
+  <div class="scanner"></div>
+
+  <!-- Particle elements -->
+  <div class="particle" style="top: 15%; left: 10%"></div>
+  <div class="particle" style="top: 25%; left: 20%"></div>
+  <div class="particle" style="top: 35%; left: 80%"></div>
+  <div class="particle" style="top: 55%; left: 15%"></div>
+  <div class="particle" style="top: 75%; left: 65%"></div>
+  <div class="particle" style="top: 85%; left: 45%"></div>
+  <div class="particle" style="top: 15%; left: 70%"></div>
+  <div class="particle" style="top: 45%; left: 90%"></div>
+
+  <div class="container">
+    <h1>Final Clue</h1>
+    <p>Complete this knowledge test to reveal the next letter. You must get all 7 questions correct!</p>
+
+    <div class="quiz-container">
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+
+      <div id="quiz"></div>
+
+      <button id="submit-btn" class="submit-btn">Submit Answers</button>
+      <button id="reset-btn" class="submit-btn reset-btn">Try Again</button>
+
+      <div id="result"></div>
+      <div id="revealed-letter" class="revealed-letter">A</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const quizContainer = document.getElementById('quiz');
+      const submitButton = document.getElementById('submit-btn');
+      const resetButton = document.getElementById('reset-btn');
+      const resultDiv = document.getElementById('result');
+      const progressBar = document.getElementById('progress-bar');
+      const revealedLetter = document.getElementById('revealed-letter');
+
+      // Fetch questions from Open Trivia Database API
+      async function fetchQuestions() {
+        try {
+          // Show loading state
+          quizContainer.innerHTML = '<p style="text-align: center; color: var(--neon-blue);">Loading questions...</p>';
+
+          // Fetch 10 questions (we'll use 7) to have some buffer in case of formatting issues
+          const response = await fetch('https://opentdb.com/api.php?amount=10&type=multiple');
+          const data = await response.json();
+
+          if (data.response_code !== 0 || !data.results || data.results.length < 7) {
+            throw new Error('Failed to fetch enough questions');
+          }
+
+          // Format the questions to match our structure
+          return data.results.slice(0, 7).map(q => {
+            return {
+              question: decodeHTMLEntities(q.question),
+              options: [...q.incorrect_answers.map(a => decodeHTMLEntities(a)),
+              decodeHTMLEntities(q.correct_answer)],
+              answer: decodeHTMLEntities(q.correct_answer)
+            };
+          });
+        } catch (error) {
+          console.error('Error fetching questions:', error);
+          // Fall back to the original question bank if API fails
+          return selectRandomQuestionsFromBank();
+        }
+      }
+
+      // Utility function to decode HTML entities in API responses
+      function decodeHTMLEntities(text) {
+        const textArea = document.createElement('textarea');
+        textArea.innerHTML = text;
+        return textArea.value;
+      }
+
+      // Fallback to original question bank if API fails
+      function selectRandomQuestionsFromBank() {
+        const questionBank = [
+          {
+            question: "Will You wait for the questions to load from the API?",
+            options: ["Refesh", "please", "5-10 seconds", "wait"],
+            answer: "Refresh"
+          },
+        ];
+
+        const shuffled = [...questionBank].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 7);
+      }
+
+      // Initialize quiz with API data
+      async function initializeQuiz() {
+        submitButton.disabled = true;
+        submitButton.style.opacity = "0.5";
+
+        const questions = await fetchQuestions();
+        selectedQuestions = questions;
+        renderQuiz();
+
+        submitButton.disabled = false;
+        submitButton.style.opacity = "1";
+      }
+
+      let selectedQuestions = [];
+
+      // Render quiz with the provided questions
+      function renderQuiz() {
+        quizContainer.innerHTML = '';
+
+        selectedQuestions.forEach((questionData, index) => {
+          const questionElement = document.createElement('div');
+          questionElement.className = 'question';
+
+          const questionText = document.createElement('p');
+          questionText.textContent = `${index + 1}. ${questionData.question}`;
+          questionElement.appendChild(questionText);
+
+          const optionsDiv = document.createElement('div');
+          optionsDiv.className = 'options';
+
+          // Shuffle the options
+          const shuffledOptions = [...questionData.options].sort(() => 0.5 - Math.random());
+
+          shuffledOptions.forEach((option, optionIndex) => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'option';
+
+            const radioInput = document.createElement('input');
+            radioInput.type = 'radio';
+            radioInput.name = `question-${index}`;
+            radioInput.id = `q${index}-option${optionIndex}`;
+            radioInput.value = option;
+
+            const label = document.createElement('label');
+            label.htmlFor = `q${index}-option${optionIndex}`;
+            label.textContent = option;
+
+            optionDiv.appendChild(radioInput);
+            optionDiv.appendChild(label);
+            optionsDiv.appendChild(optionDiv);
+          });
+
+          questionElement.appendChild(optionsDiv);
+          quizContainer.appendChild(questionElement);
+        });
+
+        // Reset progress bar
+        progressBar.style.width = '0';
+      }
+
+      // Check answers (same as before)
+      function checkAnswers() {
+        let score = 0;
+        let answered = 0;
+
+        selectedQuestions.forEach((questionData, index) => {
+          const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
+
+          if (selectedOption) {
+            answered++;
+            if (selectedOption.value === questionData.answer) {
+              score++;
+            }
+          }
+        });
+
+        // Update progress bar
+        progressBar.style.width = `${(answered / 7) * 100}%`;
+
+        // Check if all questions are answered
+        if (answered < 7) {
+          resultDiv.textContent = 'Please answer all questions!';
+          resultDiv.style.color = 'var(--neon-pink)';
+          return false;
+        }
+
+        // Display result
+        if (score === 7) {
+          resultDiv.textContent = `Perfect! You got all ${score} questions correct!`;
+          resultDiv.style.color = 'var(--neon-yellow)';
+          revealedLetter.style.display = 'block';
+
+          // Add glowing effect
+          revealedLetter.classList.add('revealed');
+        } else {
+          resultDiv.textContent = `You got ${score} out of 7 correct. You need all 7 correct to reveal the letter.`;
+          resultDiv.style.color = 'var(--neon-pink)';
+          revealedLetter.style.display = 'none';
+        }
+
+        // Show reset button, hide submit button
+        submitButton.style.display = 'none';
+        resetButton.style.display = 'block';
+
+        return true;
+      }
+
+      // Reset quiz to fetch new questions from API
+      function resetQuiz() {
+        initializeQuiz();
+        resultDiv.textContent = '';
+        progressBar.style.width = '0';
+        revealedLetter.style.display = 'none';
+        submitButton.style.display = 'block';
+        resetButton.style.display = 'none';
+      }
+
+      // Event listeners
+      submitButton.addEventListener('click', checkAnswers);
+      resetButton.addEventListener('click', resetQuiz);
+
+      // Initialize on page load with API data
+      initializeQuiz();
+
+      // Update progress bar as user selects answers
+      document.addEventListener('change', function (e) {
+        if (e.target.type === 'radio') {
+          let answered = 0;
+          for (let i = 0; i < 7; i++) {
+            if (document.querySelector(`input[name="question-${i}"]:checked`)) {
+              answered++;
+            }
+          }
+          progressBar.style.width = `${(answered / 7) * 100}%`;
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

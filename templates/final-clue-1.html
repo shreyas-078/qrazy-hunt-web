@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Clue</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .hanoi-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .towers-container {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      max-width: 800px;
+      height: 300px;
+      margin: 2rem 0;
+      position: relative;
+    }
+
+    .tower {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      width: 30%;
+      height: 100%;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .tower:before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 250px;
+      background-color: var(--neon-blue);
+      border-radius: 6px;
+      top: 0;
+      z-index: 1;
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .tower:after {
+      content: '';
+      position: absolute;
+      width: 80%;
+      height: 12px;
+      background-color: var(--neon-purple);
+      bottom: 0;
+      border-radius: 6px;
+      box-shadow: 0 0 10px var(--neon-purple);
+    }
+
+    .ring {
+      width: 80%;
+      height: 40px;
+      border-radius: 20px;
+      margin: 4px 0;
+      z-index: 2;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--dark-bg);
+      font-weight: bold;
+      font-family: 'Orbitron', sans-serif;
+      text-shadow: none;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    .ring-1 {
+      width: 40%;
+      background-color: var(--neon-yellow);
+    }
+
+    .ring-2 {
+      width: 55%;
+      background-color: var(--neon-blue);
+    }
+
+    .ring-3 {
+      width: 70%;
+      background-color: var(--neon-pink);
+    }
+
+    .ring-4 {
+      width: 85%;
+      background-color: var(--neon-purple);
+    }
+
+    .ring.selected {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+    }
+
+    .ring.glow {
+      animation: glowRing 1s infinite alternate;
+    }
+
+    @keyframes glowRing {
+      from {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
+
+      to {
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 40px var(--neon-blue);
+      }
+    }
+
+    .tower.highlight:before {
+      box-shadow: 0 0 20px var(--neon-yellow);
+      background-color: var(--neon-yellow);
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 2rem;
+    }
+
+    .move-counter,
+    .min-moves {
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-blue);
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      color: var(--neon-yellow);
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .reset-btn {
+      background-color: var(--neon-blue);
+      color: var(--dark-bg);
+      font-family: 'Share Tech Mono', monospace;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: bold;
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .reset-btn:hover {
+      background-color: var(--neon-yellow);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-yellow);
+    }
+
+    .modal-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(10, 10, 30, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.5s ease;
+    }
+
+    .modal-container.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background-color: var(--dark-bg);
+      border: 2px solid var(--neon-blue);
+      border-radius: 10px;
+      padding: 2rem;
+      max-width: 90%;
+      width: 500px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 0 30px var(--neon-blue), 0 0 60px rgba(0, 243, 255, 0.4);
+    }
+
+    .modal-content h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--neon-yellow);
+    }
+
+    .modal-content p {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    .revealed-letter {
+      font-size: 8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      margin: 2rem 0;
+      animation: pulseLetter 2s infinite alternate;
+    }
+
+    @keyframes pulseLetter {
+      from {
+        filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      }
+
+      to {
+        filter: drop-shadow(0 0 30px rgba(255, 0, 255, 0.8));
+      }
+    }
+
+    .close-btn {
+      background-color: var(--neon-purple);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+    }
+
+    .close-btn:hover {
+      background-color: var(--neon-pink);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-pink);
+    }
+
+    .instructions {
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-purple);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .towers-container {
+        height: 250px;
+      }
+
+      .ring {
+        height: 30px;
+      }
+
+      .tower:before {
+        height: 200px;
+      }
+
+      .game-info {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .move-counter,
+      .min-moves {
+        width: 100%;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .modal-content {
+        width: 90%;
+        padding: 1.5rem;
+      }
+
+      .revealed-letter {
+        font-size: 6rem;
+      }
+    }
+
+    /* Add styles for smaller phones */
+    @media (max-width: 480px) {
+      .container {
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .instructions {
+        font-size: 0.9rem;
+      }
+
+      .towers-container {
+        height: 200px;
+      }
+
+      .tower:before {
+        height: 150px;
+        width: 8px;
+      }
+
+      .ring {
+        height: 25px;
+        margin: 3px 0;
+      }
+
+      .game-info {
+        gap: 0.8rem;
+      }
+
+      .move-counter,
+      .min-moves {
+        font-size: 1rem;
+        padding: 0.8rem;
+      }
+
+      .reset-btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 1rem;
+        width: 100%;
+      }
+
+      .modal-content h2 {
+        font-size: 1.8rem;
+      }
+
+      .modal-content p {
+        font-size: 1rem;
+      }
+
+      .revealed-letter {
+        font-size: 5rem;
+        margin: 1.5rem 0;
+      }
+
+      .close-btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 1rem;
+        width: 100%;
+      }
+    }
+
+    /* For very small phones */
+    @media (max-width: 360px) {
+      .container {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .towers-container {
+        height: 180px;
+      }
+
+      .tower:before {
+        height: 130px;
+      }
+
+      .revealed-letter {
+        font-size: 4rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hex-pattern"></div>
+  <div class="scanner"></div>
+
+  <!-- Particle elements -->
+  <div class="particle" style="top: 15%; left: 10%"></div>
+  <div class="particle" style="top: 25%; left: 20%"></div>
+  <div class="particle" style="top: 35%; left: 80%"></div>
+  <div class="particle" style="top: 55%; left: 15%"></div>
+  <div class="particle" style="top: 75%; left: 65%"></div>
+  <div class="particle" style="top: 85%; left: 45%"></div>
+  <div class="particle" style="top: 15%; left: 70%"></div>
+  <div class="particle" style="top: 45%; left: 90%"></div>
+
+  <div class="container">
+    <h1>Final Clue</h1>
+
+    <div class="instructions">
+      <p>Move all rings from the first tower to the third tower in the minimum number of moves. You can only move one
+        ring at a time, and you cannot place a larger ring on top of a smaller one.</p>
+      <p>Click on a tower to select it, then click on another tower to move the top ring.</p>
+    </div>
+
+    <div class="hanoi-container">
+      <div class="game-info">
+        <div class="move-counter">Moves: <span id="moves">0</span></div>
+        <div class="min-moves">Minimum Moves Required: 15</div>
+        <button class="reset-btn" id="reset-btn">Reset Game</button>
+      </div>
+
+      <div class="towers-container">
+        <div class="tower" id="tower-1"></div>
+        <div class="tower" id="tower-2"></div>
+        <div class="tower" id="tower-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-container" id="success-modal">
+    <div class="modal-content">
+      <h2>Congratulations!</h2>
+      <p>You've solved the Tower of Hanoi puzzle in the minimum number of moves!</p>
+      <p>The letter you've unlocked is:</p>
+      <div class="revealed-letter">B</div>
+      <p>Remember this letter for the final solution.</p>
+      <button class="close-btn" id="close-modal">Close</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const towers = document.querySelectorAll('.tower');
+      const movesCounter = document.getElementById('moves');
+      const resetBtn = document.getElementById('reset-btn');
+      const successModal = document.getElementById('success-modal');
+      const closeModal = document.getElementById('close-modal');
+
+      let moves = 0;
+      let selectedTower = null;
+      const minMoves = 15; // 2^4 - 1 for 4 rings
+
+      // Initialize the game
+      initGame();
+
+      function initGame() {
+        // Clear all towers
+        towers.forEach(tower => {
+          tower.innerHTML = '';
+        });
+
+        // Reset moves counter
+        moves = 0;
+        movesCounter.textContent = moves;
+
+        // Add rings to the first tower
+        const firstTower = document.getElementById('tower-1');
+        for (let i = 4; i >= 1; i--) {
+          const ring = document.createElement('div');
+          ring.className = `ring ring-${i}`;
+          ring.dataset.size = i;
+          firstTower.appendChild(ring);
+        }
+
+        // Reset selected tower
+        selectedTower = null;
+        clearHighlights();
+      }
+
+      // Add event listeners to towers
+      towers.forEach(tower => {
+        tower.addEventListener('click', function () {
+          if (!selectedTower) {
+            // If no tower is selected, select this tower if it has rings
+            if (tower.children.length > 0) {
+              selectedTower = tower;
+              tower.querySelector('.ring:last-child').classList.add('selected');
+              tower.classList.add('highlight');
+            }
+          } else {
+            // If a tower is already selected, try to move the ring
+            if (selectedTower !== tower) {
+              moveRing(selectedTower, tower);
+            } else {
+              // Deselect the current tower
+              clearHighlights();
+              selectedTower = null;
+            }
+          }
+        });
+      });
+
+      // Move a ring from one tower to another
+      function moveRing(fromTower, toTower) {
+        const ring = fromTower.querySelector('.ring:last-child');
+
+        // Check if the move is valid
+        if (toTower.children.length === 0 || parseInt(ring.dataset.size) < parseInt(toTower.querySelector('.ring:last-child').dataset.size)) {
+          // Move is valid
+          toTower.appendChild(ring);
+          moves++;
+          movesCounter.textContent = moves;
+
+          // Check if the game is won
+          checkWin();
+        }
+
+        // Clear selections
+        clearHighlights();
+        selectedTower = null;
+      }
+
+      // Clear all highlights and selections
+      function clearHighlights() {
+        towers.forEach(tower => {
+          tower.classList.remove('highlight');
+          if (tower.children.length > 0) {
+            tower.querySelector('.ring:last-child').classList.remove('selected');
+          }
+        });
+      }
+
+      // Check if the game is won
+      function checkWin() {
+        const thirdTower = document.getElementById('tower-3');
+
+        // Check if all 4 rings are on the third tower
+        if (thirdTower.children.length === 4) {
+          // Add glowing effect to all rings
+          const rings = thirdTower.querySelectorAll('.ring');
+          rings.forEach(ring => {
+            ring.classList.add('glow');
+          });
+
+          // Show success modal
+          setTimeout(() => {
+            if (moves === minMoves) {
+              successModal.classList.add('show');
+            } else {
+              alert(`You solved it in ${moves} moves, but you need to solve it in exactly ${minMoves} moves to unlock the letter. Try again!`);
+              setTimeout(initGame, 1500);
+            }
+          }, 1000);
+        }
+      }
+
+      // Reset button event listener
+      resetBtn.addEventListener('click', initGame);
+
+      // Close modal button event listener
+      closeModal.addEventListener('click', function () {
+        successModal.classList.remove('show');
+      });
+    });
+  </script>
+</body>
+
+</html>
