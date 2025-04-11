@@ -201,11 +201,11 @@
       font-size: 8rem;
       font-family: 'Orbitron', sans-serif;
       font-weight: 900;
-      background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink), var(--neon-purple));
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+      color: var(--neon-blue);
+      text-shadow: 0 0 15px var(--neon-blue), 0 0 25px var(--neon-pink);
       margin: 2rem 0;
       animation: pulseLetter 2s infinite alternate;
+      display: inline-block;
     }
 
     @keyframes pulseLetter {

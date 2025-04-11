@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Clue</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .hangman-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+
+    .tries-left,
+    .streak-counter {
+      background-color: rgba(10, 10, 30, 0.7);
+      border: 1px solid var(--neon-blue);
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      color: var(--neon-yellow);
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .reset-btn {
+      background-color: var(--neon-blue);
+      color: var(--dark-bg);
+      font-family: 'Share Tech Mono', monospace;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .reset-btn:hover {
+      background-color: var(--neon-yellow);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-blue);
+    }
+
+    .streak-container {
+      display: flex;
+      justify-content: center;
+      gap: 0.8rem;
+      margin: 1.5rem 0;
+    }
+
+    .streak-dot {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background-color: rgba(var(--neon-blue-rgb), 0.3);
+      border: 1px solid var(--neon-blue);
+    }
+
+    .streak-dot.active {
+      background-color: var(--neon-blue);
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .word-display {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .letter-box {
+      width: 40px;
+      height: 40px;
+      border-bottom: 3px solid var(--neon-blue);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      color: var(--neon-yellow);
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .category {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      color: var(--neon-purple);
+      text-align: center;
+    }
+
+    .keyboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-width: 600px;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .key {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(10, 10, 30, 0.7);
+      color: var(--neon-blue);
+      border: 1px solid var(--neon-blue);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .key:hover:not(.disabled) {
+      background-color: rgba(var(--neon-blue-rgb), 0.3);
+      transform: scale(1.05);
+    }
+
+    .key.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .key.correct {
+      background-color: rgba(0, 255, 0, 0.3);
+      border-color: var(--neon-yellow);
+    }
+
+    .key.incorrect {
+      background-color: rgba(255, 0, 0, 0.3);
+      border-color: var(--neon-pink);
+    }
+
+    .hangman-figure {
+      width: 200px;
+      height: 250px;
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .hangman-part {
+      position: absolute;
+      stroke: var(--neon-blue);
+      stroke-width: 3;
+      fill: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .hangman-part.visible {
+      opacity: 1;
+    }
+
+    .message-container {
+      background-color: rgba(10, 10, 30, 0.9);
+      border: 1px solid var(--neon-purple);
+      border-radius: 10px;
+      padding: 2rem;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 999;
+      width: 80%;
+      max-width: 500px;
+      display: none;
+      text-align: center;
+      box-shadow: 0 0 30px var(--neon-purple);
+    }
+
+    .message-container h2 {
+      color: var(--neon-yellow);
+      margin-bottom: 1rem;
+    }
+
+    .message-container p {
+      color: white;
+      margin-bottom: 1.5rem;
+    }
+
+    .revealed-number {
+      font-size: 8rem;
+      color: var(--neon-yellow);
+      text-shadow: 0 0 20px var(--neon-yellow);
+      margin: 2rem 0;
+      font-weight: bold;
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px var(--neon-yellow), 0 0 20px var(--neon-yellow);
+      }
+
+      to {
+        text-shadow: 0 0 20px var(--neon-yellow), 0 0 30px var(--neon-yellow), 0 0 40px var(--neon-yellow);
+      }
+    }
+
+    .restart-btn,
+    .close-btn {
+      background-color: var(--neon-purple);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .restart-btn:hover,
+    .close-btn:hover {
+      background-color: var(--neon-blue);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--neon-blue);
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 998;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .letter-box {
+        width: 30px;
+        height: 30px;
+        font-size: 1.2rem;
+      }
+
+      .key {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+      }
+
+      .game-info {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .tries-left,
+      .streak-counter {
+        width: 100%;
+        text-align: center;
+      }
+
+      .reset-btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .letter-box {
+        width: 25px;
+        height: 25px;
+        font-size: 1rem;
+      }
+
+      .key {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+      }
+
+      .hangman-figure {
+        width: 150px;
+        height: 200px;
+      }
+
+      .message-container {
+        padding: 1.5rem;
+      }
+
+      .revealed-number {
+        font-size: 6rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hex-pattern"></div>
+  <div class="scanner"></div>
+
+  <!-- Particle elements -->
+  <div class="particle" style="top: 15%; left: 10%"></div>
+  <div class="particle" style="top: 25%; left: 20%"></div>
+  <div class="particle" style="top: 35%; left: 80%"></div>
+  <div class="particle" style="top: 55%; left: 15%"></div>
+  <div class="particle" style="top: 75%; left: 65%"></div>
+  <div class="particle" style="top: 85%; left: 45%"></div>
+  <div class="particle" style="top: 15%; left: 70%"></div>
+  <div class="particle" style="top: 45%; left: 90%"></div>
+
+  <div class="container">
+    <h1>Final Clue</h1>
+    <div class="instructions">
+      <p>Solve the hangman puzzle to reveal the final number. You need to correctly guess 5 words in a row without
+        failing to unlock the number.</p>
+      <p>Each puzzle has a category hint to help you. Good luck!</p>
+    </div>
+
+    <div class="hangman-container">
+      <div class="game-info">
+        <div class="tries-left">Tries Left: <span id="tries-count">6</span></div>
+        <div class="streak-counter">Streak: <span id="streak-count">0</span>/5</div>
+        <button class="reset-btn" id="reset-btn">New Word</button>
+      </div>
+
+      <div class="streak-container">
+        <div class="streak-dot" id="streak-1"></div>
+        <div class="streak-dot" id="streak-2"></div>
+        <div class="streak-dot" id="streak-3"></div>
+        <div class="streak-dot" id="streak-4"></div>
+        <div class="streak-dot" id="streak-5"></div>
+      </div>
+
+      <div class="category" id="category-display">Category: Loading...</div>
+
+      <svg class="hangman-figure" viewBox="0 0 200 250">
+        <!-- Gallows -->
+        <line x1="20" y1="230" x2="180" y2="230" class="hangman-part visible"></line>
+        <line x1="40" y1="230" x2="40" y2="20" class="hangman-part visible"></line>
+        <line x1="40" y1="20" x2="120" y2="20" class="hangman-part visible"></line>
+        <line x1="120" y1="20" x2="120" y2="50" class="hangman-part visible"></line>
+
+        <!-- Head -->
+        <circle cx="120" cy="70" r="20" class="hangman-part" id="part-1"></circle>
+
+        <!-- Body -->
+        <line x1="120" y1="90" x2="120" y2="150" class="hangman-part" id="part-2"></line>
+
+        <!-- Arms -->
+        <line x1="120" y1="110" x2="90" y2="100" class="hangman-part" id="part-3"></line>
+        <line x1="120" y1="110" x2="150" y2="100" class="hangman-part" id="part-4"></line>
+
+        <!-- Legs -->
+        <line x1="120" y1="150" x2="100" y2="190" class="hangman-part" id="part-5"></line>
+        <line x1="120" y1="150" x2="140" y2="190" class="hangman-part" id="part-6"></line>
+      </svg>
+
+      <div class="word-display" id="word-display"></div>
+
+      <div class="keyboard" id="keyboard"></div>
+    </div>
+  </div>
+
+  <!-- Message that appears when game is won -->
+  <div class="overlay" id="overlay"></div>
+  <div class="message-container" id="win-message">
+    <h2>Congratulations!</h2>
+    <p>You've successfully completed 5 hangman puzzles in a row!</p>
+    <p>The number you've unlocked is:</p>
+    <div class="revealed-number">1</div>
+    <p>Remember this number for the final solution.</p>
+    <button id="close-modal" class="close-btn">Close</button>
+  </div>
+
+  <!-- Message that appears when game is lost -->
+  <div class="message-container" id="lose-message">
+    <h2>Game Over</h2>
+    <p>You failed to guess the word. Your streak has been reset.</p>
+    <button id="restart-btn" class="restart-btn">Try Again</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Word bank of challenging words with uncommon letters
+      const wordBank = [
+        "ZYMURGY", "VEXINGLY", "JUKEBOX", "KNAPSACK", "QUIZZICAL",
+        "FJORD", "JINXED", "LUXURIOUS", "WAXWORK", "JACKPOT",
+        "COMPLEXIFY", "OXIDIZING", "JAZZY", "XENOPHOBIA", "QUIXOTIC",
+        "PHLEGM", "RHYTHM", "ZOMBIE", "VORTEX", "KAYAK",
+        "BUZZWORDS", "PSYCHE", "AWKWARD", "OXYGEN", "KILOBYTE",
+        "SPHINX", "MYSTIFY", "WHIZZING", "JIGSAW", "ZIGZAG",
+        "MNEMONIC", "SESQUIPEDALIAN", "TINTINNABULATION", "LAGNIAPPE", "FLUMMOXED",
+        "XANTHOPHYLL", "YACHTSMAN", "SUBPOENA", "SYZYGY",
+        "TRISKAIDEKAPHOBIA", "ANACHRONISM", "DYSCHRONOMETRIA", "LOQUACIOUS", "ZEUGMA",
+        "CHTHONIC", "OBFUSCATE", "RACEMOSE", "BIBLIOKLEPT", "QUADRUMVIRATE",
+        "PANEGYRIC", "ESOTERIC", "OBSTREPEROUS", "FARRAGO", "QUISLING",
+        "ABSCOND", "INSOUCIANT", "DEFENESTRATION", "PUZZLEMENT", "CLISHMACLAVER",
+        "HONORIFICABILITUDINITATIBUS", "MACABRE", "BRICOLAGE", "VERISIMILITUDE", "NOUMENON"
+      ];
+
+      // DOM elements
+      const wordDisplay = document.getElementById('word-display');
+      const keyboard = document.getElementById('keyboard');
+      const categoryDisplay = document.getElementById('category-display');
+      const triesCount = document.getElementById('tries-count');
+      const streakCount = document.getElementById('streak-count');
+      const streakDots = [
+        document.getElementById('streak-1'),
+        document.getElementById('streak-2'),
+        document.getElementById('streak-3'),
+        document.getElementById('streak-4'),
+        document.getElementById('streak-5')
+      ];
+      const resetBtn = document.getElementById('reset-btn');
+      const winMessage = document.getElementById('win-message');
+      const loseMessage = document.getElementById('lose-message');
+      const overlay = document.getElementById('overlay');
+      const restartBtn = document.getElementById('restart-btn');
+      const closeModal = document.getElementById('close-modal');
+
+      // Game state
+      let currentWord = "";
+      let remainingTries = 6;
+      let correctGuesses = 0;
+      let totalLetters = 0;
+      let streak = 0;
+      let usedWords = [];
+
+      // Initialize game
+      initGame();
+
+      function initGame() {
+        // Clear previous game state
+        wordDisplay.innerHTML = '';
+        keyboard.innerHTML = '';
+        remainingTries = 6;
+        correctGuesses = 0;
+        triesCount.textContent = remainingTries;
+
+        // Hide all hangman parts except the gallows
+        document.querySelectorAll('.hangman-part:not(.visible)').forEach(part => {
+          if (!part.classList.contains('visible')) {
+            part.classList.remove('visible');
+          }
+        });
+
+        // Ensure only the gallows are visible
+        document.querySelectorAll('#part-1, #part-2, #part-3, #part-4, #part-5, #part-6').forEach(part => {
+          part.classList.remove('visible');
+        });
+
+        // Update category display to show it's a word from the word bank
+        categoryDisplay.textContent = "Hint: Challenging word with uncommon letters";
+
+        // Find a word that hasn't been used yet
+        let availableWords = wordBank.filter(word => !usedWords.includes(word));
+
+        // If all words have been used, reset the used words
+        if (availableWords.length === 0) {
+          usedWords = [];
+          availableWords = wordBank;
+        }
+
+        // Select a random word from available words
+        const wordIndex = Math.floor(Math.random() * availableWords.length);
+        currentWord = availableWords[wordIndex];
+        usedWords.push(currentWord);
+
+        // Count total letters (not including spaces)
+        totalLetters = currentWord.replace(/\s/g, '').length;
+
+        // Create letter boxes for the word
+        for (let i = 0; i < currentWord.length; i++) {
+          const letterBox = document.createElement('div');
+          letterBox.classList.add('letter-box');
+
+          if (currentWord[i] === ' ') {
+            letterBox.textContent = ' ';
+            letterBox.style.borderBottom = 'none';
+          } else {
+            letterBox.dataset.letter = currentWord[i];
+          }
+
+          wordDisplay.appendChild(letterBox);
+        }
+
+        // Create keyboard
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for (let i = 0; i < alphabet.length; i++) {
+          const key = document.createElement('button');
+          key.classList.add('key');
+          key.textContent = alphabet[i];
+
+          key.addEventListener('click', function () {
+            if (!this.classList.contains('disabled')) {
+              checkLetter(alphabet[i], this);
+            }
+          });
+
+          keyboard.appendChild(key);
+        }
+      }
+
+      // Function to check if the guessed letter is in the word
+      function checkLetter(letter, keyElement) {
+        keyElement.classList.add('disabled');
+
+        let found = false;
+        const letterBoxes = document.querySelectorAll('.letter-box');
+
+        letterBoxes.forEach(box => {
+          if (box.dataset.letter === letter) {
+            box.textContent = letter;
+            found = true;
+            correctGuesses++;
+          }
+        });
+
+        if (found) {
+          keyElement.classList.add('correct');
+
+          // Check if all letters have been guessed
+          if (correctGuesses === totalLetters) {
+            // Word completed successfully
+            streak++;
+            streakCount.textContent = streak;
+
+            // Update streak dots
+            if (streak <= 5) {
+              streakDots[streak - 1].classList.add('active');
+            }
+
+            // Check if player has won (reached 5 words in a row)
+            if (streak >= 5) {
+              setTimeout(() => {
+                showWinMessage();
+              }, 500);
+            } else {
+              // Wait a moment before starting a new word
+              setTimeout(() => {
+                initGame();
+              }, 1000);
+            }
+          }
+        } else {
+          keyElement.classList.add('incorrect');
+          remainingTries--;
+          triesCount.textContent = remainingTries;
+
+          // Show next hangman part
+          document.getElementById(`part-${6 - remainingTries}`).classList.add('visible');
+
+          // Check if game is lost
+          if (remainingTries <= 0) {
+            // Ensure remainingTries doesn't go negative
+            remainingTries = 0;
+            triesCount.textContent = remainingTries;
+
+            // Reveal the correct word
+            revealWord();
+
+            // Reset streak
+            streak = 0;
+            streakCount.textContent = streak;
+
+            // Reset streak dots
+            streakDots.forEach(dot => dot.classList.remove('active'));
+
+            setTimeout(() => {
+              showLoseMessage();
+            }, 500);
+          }
+        }
+      }
+
+      // Function to reveal the word when game is lost
+      function revealWord() {
+        const letterBoxes = document.querySelectorAll('.letter-box');
+        letterBoxes.forEach(box => {
+          if (box.dataset.letter && !box.textContent) {
+            box.textContent = box.dataset.letter;
+            box.style.color = 'var(--neon-pink)';
+          }
+        });
+
+        disableAllKeys();
+      }
+
+      // Function to disable all keyboard keys
+      function disableAllKeys() {
+        const keys = document.querySelectorAll('.key');
+        keys.forEach(key => {
+          key.classList.add('disabled');
+        });
+      }
+
+      // Function to show win message
+      function showWinMessage() {
+        disableAllKeys();
+        winMessage.style.display = 'block';
+        overlay.style.display = 'block';
+      }
+
+      // Function to show lose message
+      function showLoseMessage() {
+        disableAllKeys();
+        loseMessage.style.display = 'block';
+        overlay.style.display = 'block';
+      }
+
+      // Event listener for restart button (when lost)
+      restartBtn.addEventListener('click', function () {
+        loseMessage.style.display = 'none';
+        overlay.style.display = 'none';
+        initGame();
+      });
+
+      // Event listener for close modal button (when won)
+      closeModal.addEventListener('click', function () {
+        winMessage.style.display = 'none';
+        overlay.style.display = 'none';
+        streak = 0;
+        streakCount.textContent = streak;
+        streakDots.forEach(dot => dot.classList.remove('active'));
+        initGame();
+      });
+
+      // Event listener for new word button
+      resetBtn.addEventListener('click', function () {
+        if (streak > 0) {
+          if (confirm("Starting a new word will reset your current streak. Are you sure?")) {
+            streak = 0;
+            streakCount.textContent = streak;
+            streakDots.forEach(dot => dot.classList.remove('active'));
+            initGame();
+          }
+        } else {
+          initGame();
+        }
+      });
+
+      // Allow keyboard input
+      document.addEventListener('keydown', function (event) {
+        const key = event.key.toUpperCase();
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        if (alphabet.includes(key)) {
+          const keyElement = Array.from(document.querySelectorAll('.key')).find(k => k.textContent === key);
+          if (keyElement && !keyElement.classList.contains('disabled')) {
+            checkLetter(key, keyElement);
+          }
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
