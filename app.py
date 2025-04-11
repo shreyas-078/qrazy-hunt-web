@@ -6,63 +6,63 @@ app = Flask(__name__, static_folder='static', template_folder='templates', stati
 def index():
     return render_template('index.html')
 
-@app.route('/clue1_sd8f987sdf76876sdf')
+@app.route('/clue1_sdfs9d8f7s98d7fs89d')
 def clue1():
     return render_template('clue1.html')
 
-@app.route('/clue2_s89d7f87sdf67876vv')
+@app.route('/clue2_sd98f7s89df798sd7f')
 def clue2():
     return render_template('clue2.html')
 
-@app.route('/clue3_poi45o6i4opi56pip4o56')
+@app.route('/clue3_mq3bmn4b23m4b2mn34bm')
 def clue3():
     return render_template('clue3.html')
 
-@app.route('/clue4_mbnwb45mnbm4b5m3nb451')
+@app.route('/clue4_mn34b5mn3b45mnbmnb23423')
 def clue4():
     return render_template('clue4.html')
 
-@app.route('/clue5_0x90s9df0s9df989sdf')
+@app.route('/clue5_zsd987s89d798s7df89s7df9')
 def clue5():
     return render_template('clue5.html')
 
-@app.route('/clue6_m2m3n42n34mn23m4nm')
+@app.route('/clue6_s98df798sd7f89sd7f66876sdf')
 def clue6():
     return render_template('clue6.html')
 
-@app.route('/clue7_kj2k3j4234jk23h4kjhj2')
+@app.route('/clue7_3nmb45nb34mn5bmn345bnm')
 def clue7():
     return render_template('clue7.html')
 
-@app.route('/final_clue_9s0d890s809f8s90d8f')
+@app.route('/final_clue_xcv987xc89v798xc7v9')
 def final_clue():
     return render_template('final-clue-1.html')
 
-@app.route('/final_clue_mk23n4j23n4k2n3kj42j4545')
+@app.route('/final_clue_mnbm2n3b4mn2b34mn2b3m4n')
 def final_clue2():
     return render_template('final-clue-2.html')
 
-@app.route('/final_clue_kh4k5h34kj5h34jk5hkjhk34')
+@app.route('/final_clue_mnbw3mn4bnm34bmn23b4nm')
 def final_clue3():
     return render_template('final-clue-3.html')
 
-@app.route('/final_clue_sd098fs90d87f09sdf')
+@app.route('/final_clue_zx7c6x876cx87c6v87xcv')
 def final_clue4():
     return render_template('final-clue-4.html')
 
-@app.route('/final_clue_asd098a0s98da90s8d')
+@app.route('/final_clue_mn23b4mn2b34n2b3m4')
 def final_clue5():
     return render_template('final-clue-5.html')
 
-@app.route('/final_clue_2i3l4kj2l3j4l23j4l')
+@app.route('/final_clue_9x87c89x7cvq3478')
 def final_clue6():
     return render_template('final-clue-6.html')
 
-@app.route('/final_clue_2klh34kj2h34jkh23') 
+@app.route('/final_clue_mne4b5n3b4n53b4nm5b3m') 
 def final_clue7():
     return render_template('final-clue-7.html')
 
-@app.route('/final_clue_sd098f09s8df09sd8f809sdf')
+@app.route('/final_clue_mnbqnb34mnb34mn2b3n4')
 def final_clue8():
     return render_template('final-clue-8.html')
 
