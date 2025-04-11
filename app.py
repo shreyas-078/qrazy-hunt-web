@@ -66,4 +66,4 @@ def final_clue7():
 def final_clue8():
     return render_template('final-clue-8.html')
 
-app.run(debug=True, host="0.0.0.0", port=5100)
+app.run(host="0.0.0.0", port=5100)
